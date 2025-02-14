@@ -1,1667 +1,0 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title data-i18n="main_title">حاسبة البناء - منصة الاتحاد العام للمقاولين اليمنيين</title>
-  <!-- Chart.js لرسم الرسوم البيانية -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- jsPDF لتوليد تقارير PDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <!-- XLSX لتنزيل ملفات Excel -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
-  <style>
-    /* المتغيرات الأساسية */
-    :root {
-      --primary-color: #8B4513;
-      --secondary-color: #A0522D;
-      --light-bg: #f4f4f4;
-      --container-bg: #fff;
-      --border-color: #aaa;
-      --beige: rgba(245, 245, 220, 0.8);
-    }
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: var(--beige);
-      color: #333;
-      transition: background-color 0.3s, color 0.3s;
-      direction: rtl;
-      line-height: 1.6;
-    }
-    /* تنسيق الحاوية العامة */
-    .container {
-      max-width: 1200px;
-      margin: 20px auto;
-      background-color: var(--container-bg);
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-      border: 1px solid #ddd;
-    }
-    /* تنسيق الهيدر */
-    header {
-      background-color: var(--primary-color);
-      color: #fff;
-      padding: 10px 20px;
-      text-align: center;
-    }
-    header h2.main-title {
-      margin: 5px 0 10px;
-      font-size: 2rem;
-      text-shadow: 1px 1px 2px #000;
-    }
-    .header-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 10px;
-      margin-top: 15px;
-      padding: 0 10px;
-    }
-    .header-box {
-      padding: 10px;
-      text-align: center;
-      border: 3px double var(--secondary-color);
-      border-radius: 8px;
-      background-color: #fff;
-      transition: background-color 0.3s, transform 0.3s;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
-    .header-box:hover {
-      background-color: var(--light-bg);
-      transform: scale(1.05);
-    }
-    .header-box .icon {
-      font-size: 1.5rem;
-      margin-bottom: 5px;
-    }
-    .header-box .title {
-      font-size: 1rem;
-      font-weight: bold;
-      color: var(--primary-color);
-    }
-    /* تنسيق الأقسام والعناوين */
-    h1, h2, h3 {
-      text-align: center;
-    }
-    h1 {
-      color: var(--primary-color);
-      margin-bottom: 20px;
-      font-size: 2rem;
-    }
-    h2 {
-      color: var(--secondary-color);
-      margin: 20px 0 10px;
-      border-bottom: 2px solid var(--primary-color);
-      padding-bottom: 10px;
-      font-size: 1.5rem;
-    }
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: bold;
-    }
-    input, select, button, textarea {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 1rem;
-      box-sizing: border-box;
-    }
-    button {
-      background-color: var(--primary-color);
-      color: #fff;
-      border: none;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    button:hover {
-      background-color: var(--secondary-color);
-    }
-    .instructions {
-      background-color: #f9f9f9;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      border: 1px solid #ddd;
-      font-size: 0.95rem;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      font-size: 0.9rem;
-    }
-    table, th, td {
-      border: 1px solid #ccc;
-    }
-    th, td {
-      padding: 10px;
-      text-align: center;
-    }
-    th {
-      background-color: var(--primary-color);
-      color: #fff;
-    }
-    .total-row {
-      font-weight: bold;
-      background-color: #f4f4f4;
-    }
-    .share-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-      margin-top: 20px;
-    }
-    .share-buttons button {
-      padding: 10px 20px;
-      font-size: 1rem;
-      flex: 1 1 auto;
-    }
-    footer {
-      background-color: var(--primary-color);
-      color: #fff;
-      text-align: center;
-      padding: 10px 20px;
-      font-size: 0.9rem;
-    }
-    /* استعلامات الوسائط لتحسين التجاوب */
-    @media (max-width: 768px) {
-      header h2.main-title {
-        font-size: 1.75rem;
-      }
-      .header-box .icon {
-        font-size: 1.3rem;
-      }
-      .header-box .title {
-        font-size: 0.9rem;
-      }
-      h1 {
-        font-size: 1.75rem;
-      }
-      h2 {
-        font-size: 1.3rem;
-      }
-      input, select, button, textarea {
-        font-size: 0.9rem;
-        padding: 8px;
-      }
-      .instructions {
-        font-size: 0.85rem;
-      }
-    }
-    @media (max-width: 576px) {
-      .header-container {
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 5px;
-      }
-      header, footer {
-        padding: 8px 10px;
-      }
-      input, select, button, textarea {
-        padding: 6px;
-        font-size: 0.85rem;
-      }
-      .share-buttons button {
-        font-size: 0.85rem;
-      }
-      h1 {
-        font-size: 1.5rem;
-      }
-      h2 {
-        font-size: 1.2rem;
-      }
-    }
-    /* أنماط الوضع الليلي */
-    .dark-mode {
-      background-color: #333;
-      color: #ccc;
-    }
-    .dark-mode header {
-      background-color: #222;
-    }
-    .dark-mode .container {
-      background-color: #444;
-    }
-    .dark-mode table, .dark-mode th, .dark-mode td {
-      border-color: #555;
-    }
-    .dark-mode th {
-      background-color: #555;
-      color: #fff;
-    }
-  </style>
-</head>
-<body>
-  <!-- الهيدر -->
-  <header>
-    <h2 class="main-title" data-i18n="main_title">حاسبة البناء الذكية</h2>
-    <div class="header-container">
-      <a class="header-box tab-link active" data-target="calculatorSection">
-        <div class="icon">🧮</div>
-        <div class="title" data-i18n="calculator">الحاسبة</div>
-      </a>
-      <a class="header-box tab-link" data-target="advancedDetailsSection">
-        <div class="icon">📝</div>
-        <div class="title" data-i18n="advanced_details">التفاصيل</div>
-      </a>
-      <a class="header-box tab-link" data-target="historySection">
-        <div class="icon">📜</div>
-        <div class="title" data-i18n="history">السجل</div>
-      </a>
-      <a class="header-box tab-link" data-target="userManualSection">
-        <div class="icon">📘</div>
-        <div class="title" data-i18n="user_manual">الدليل</div>
-      </a>
-      <a class="header-box tab-link" data-target="internationalStandardsSection">
-        <div class="icon">🌐</div>
-        <div class="title" data-i18n="international_standards">المعايير</div>
-      </a>
-      <a class="header-box tab-link" data-target="guidelinesSection">
-        <div class="icon">💡</div>
-        <div class="title" data-i18n="guidelines">التوجيهات</div>
-      </a>
-      <a class="header-box" id="priceListBtn" href="https://guyc-yemen.com/price-guide/" target="_blank">
-        <div class="icon">🏷️</div>
-        <div class="title" data-i18n="price_list">الأسعار</div>
-      </a>
-      <!-- زر الوضع الليلي -->
-      <a class="header-box" id="darkModeToggle">
-        <div class="icon">🌙</div>
-        <div class="title" data-i18n="dark_mode">الوضع الليلي</div>
-      </a>
-      <!-- زر تبديل اللغة -->
-      <a class="header-box" id="languageToggle">
-        <div class="icon">🌐</div>
-        <div class="title" data-i18n="language_toggle">English</div>
-      </a>
-    </div>
-  </header>
-
-  <!-- المحتوى الرئيسي -->
-  <main>
-    <div class="container">
-      <!-- قسم الحاسبة الأساسي -->
-      <section id="calculatorSection">
-        <h1 data-i18n="main_title">حاسبة البناء الذكية </h1>
-        <p style="text-align: center; color: #888;" data-i18n="result_description">
-          تعتمد النتائج على أحدث المعايير الهندسية والبيانات الحقيقية للمواد والأعمال.
-        </p>
-        <!-- بيانات المشروع الأساسية -->
-        <div class="section">
-          <h2 data-i18n="section_basic_data">بيانات المشروع الأساسية</h2>
-          <div class="instructions" data-i18n="instructions_basic">
-            يرجى إدخال البيانات الأساسية للمشروع للحصول على تقدير أولي للتكلفة.
-          </div>
-          <label for="projectName" data-i18n="project_name">اسم المشروع (اختياري):</label>
-          <input type="text" id="projectName" placeholder="أدخل اسم المشروع" />
-          <label for="buildingType" data-i18n="building_type">نوع المبنى:</label>
-          <select id="buildingType">
-            <option value="" data-i18n="choose_type"></option>
-            <option value="residential" data-i18n="residential">سكني</option>
-            <option value="commercial" data-i18n="commercial">تجاري</option>
-            <option value="service" data-i18n="service">خدمي</option>
-            <option value="industrial" data-i18n="industrial">صناعي</option>
-            <option value="public" data-i18n="public">عام/حكومي</option>
-          </select>
-          <label for="detailedBuildingType" data-i18n="detailed_building_type">تحديد نوع المبنى:</label>
-          <select id="detailedBuildingType">
-            <option value="" data-i18n="choose_type"></option>
-          </select>
-          <div id="customDetailedBuildingTypeContainer" style="display:none;">
-            <label for="customDetailedBuildingType" data-i18n="enter_custom_building">
-              أدخل نوع المبنى الخاص:
-            </label>
-            <input type="text" id="customDetailedBuildingType" placeholder="أدخل نوع المبنى" />
-          </div>
-          <label for="landArea" data-i18n="land_area">المساحة الكلية للأرض (م²):</label>
-          <input type="number" id="landArea" placeholder="أدخل المساحة الكلية للأرض" />
-          <label for="builtArea" data-i18n="built_area">مساحة البناء (م²):</label>
-          <input type="number" id="builtArea" placeholder="أدخل مساحة البناء" />
-          <label for="floors" data-i18n="number_of_floors">عدد الأدوار العلوية:</label>
-          <input type="number" id="floors" placeholder="أدخل عدد الأدوار" />
-          <label for="structureType" data-i18n="structure_type">نوع الهيكل:</label>
-          <select id="structureType">
-            <option value="concrete" data-i18n="concrete">خرسانة مسلحة</option>
-            <option value="steel" data-i18n="steel">هيكل حديدي</option>
-            <option value="composite" data-i18n="composite">مركب</option>
-            <option value="timber" data-i18n="timber">خشبي</option>
-          </select>
-          <label for="constructionPhase" data-i18n="construction_phase">مرحلة البناء المطلوبة:</label>
-          <select id="constructionPhase">
-            <option value="all" data-i18n="all_phases">الكل (جميع المراحل)</option>
-            <option value="foundation" data-i18n="foundation">أساسات</option>
-            <option value="structure" data-i18n="structure">عظم</option>
-            <option value="finishing" data-i18n="finishing">تشطيب</option>
-            <option value="electrical" data-i18n="electrical">أعمال كهربائية</option>
-            <option value="plumbing" data-i18n="plumbing">أعمال سباكة</option>
-            <option value="painting" data-i18n="painting">أعمال دهان</option>
-            <option value="tiling" data-i18n="tiling">أعمال بلاط</option>
-            <option value="doors" data-i18n="doors">أبواب</option>
-            <option value="windows" data-i18n="windows">نوافذ</option>
-            <option value="flooring" data-i18n="flooring">أرضيات</option>
-          </select>
-          <label for="currency" data-i18n="currency">العملة:</label>
-          <select id="currency">
-            <option value="YER">الريال اليمني (YER)</option>
-            <option value="USD">الدولار الأمريكي (USD)</option>
-          </select>
-          <label for="exchangeRate" data-i18n="exchange_rate">سعر الصرف (ريال/دولار):</label>
-          <input type="number" id="exchangeRate" placeholder="أدخل سعر الصرف" />
-          <label for="hasBasement" data-i18n="has_basement">هل يوجد قبو (بدروم) ؟</label>
-          <select id="hasBasement">
-            <option value="no" data-i18n="no">لا</option>
-            <option value="yes" data-i18n="yes">نعم</option>
-          </select>
-          <div id="basementContainer" style="display:none;">
-            <label for="basementFloors" data-i18n="basement_floors">عدد الأدوار تحت الأرض:</label>
-            <input type="number" id="basementFloors" placeholder="أدخل عدد أدوار القبو" />
-          </div>
-          <label for="floorHeight" data-i18n="floor_height">ارتفاع الدور (متر):</label>
-          <input type="number" id="floorHeight" placeholder="أدخل ارتفاع الدور بالمتر" step="0.1" />
-          <button id="calculateBtn" data-i18n="calculate_cost">احسب التكلفة</button>
-          <button id="resetBtn" style="background-color:#555;" data-i18n="reset">إعادة تعيين</button>
-        </div>
-        <!-- عرض النتيجة -->
-        <div class="result" id="result">
-          <h2 data-i18n="result">النتيجة</h2>
-          <p id="totalCost"></p>
-          <div style="text-align:center;">
-            <button id="generatePDFBtn" data-i18n="generate_pdf">توليد تقرير PDF</button>
-          </div>
-        </div>
-        <div class="details" id="costDetailsContainer">
-          <h3 data-i18n="cost_details">تفاصيل التكلفة</h3>
-          <ul id="costDetails"></ul>
-        </div>
-        <!-- تقدير الكميات المطلوبة -->
-        <div class="section">
-          <h2 data-i18n="quantities_required">تقدير الكميات المطلوبة</h2>
-          <table id="quantityTable">
-            <thead>
-              <tr>
-                <th data-i18n="material">المادة</th>
-                <th data-i18n="required_quantity">الكمية المطلوبة</th>
-                <th data-i18n="unit">الوحدة</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- يتم توليد الصفوف برمجياً -->
-            </tbody>
-          </table>
-        </div>
-        <!-- تكلفة كل مرحلة -->
-        <div class="section">
-          <h2 data-i18n="phase_cost">تكلفة كل مرحلة</h2>
-          <table id="phaseCostTable">
-            <thead>
-              <tr>
-                <th data-i18n="phase">المرحلة</th>
-                <th data-i18n="cost">التكلفة</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- يتم توليد الصفوف برمجياً -->
-            </tbody>
-          </table>
-        </div>
-        <!-- قسم جدول مكونات المبنى -->
-        <div class="section" id="detailedElementsSection">
-          <h2 data-i18n="building_components">جدول يوضح مكونات المبنى وكمياتها وتكلفتها</h2>
-          <table id="detailedElementsTable">
-            <thead>
-              <tr>
-                <th data-i18n="element">العنصر</th>
-                <th data-i18n="quantity">الكمية</th>
-                <th data-i18n="cost">التكلفة</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- سيتم تعبئتها برمجياً -->
-            </tbody>
-          </table>
-        </div>
-        <!-- قسم التقديرات العامة -->
-        <div class="section" id="detailedCostSection">
-          <h2 data-i18n="general_estimates">التقديرات العامة</h2>
-          <table id="detailedCostTable">
-            <thead>
-              <tr>
-                <th data-i18n="item">البند</th>
-                <th data-i18n="cost">التكلفة</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- سيتم تعبئتها برمجياً -->
-            </tbody>
-          </table>
-        </div>
-        <!-- قسم الخلاصة -->
-        <div class="section" id="summarySection">
-          <h2 data-i18n="summary">الخلاصة</h2>
-          <p id="summaryTotalYER"></p>
-          <p id="summaryTotalUSD"></p>
-          <p id="summaryCostPerSqYER"></p>
-          <p id="summaryCostPerSqUSD"></p>
-        </div>
-        <!-- قسم الحساب اليدوي -->
-        <div class="manual-price-calculator">
-          <h2 data-i18n="manual_cost">حساب التكلفة وفقا لأسعار جديدة مُعدلة يدويًا</h2>
-          <div class="instructions" data-i18n="manual_instructions">
-            يمكنك تعديل أسعار المواد وكمياتها يدويًا ثم الضغط على "احسب التكلفة اليدوية" للحصول على إجمالي التكلفة المُعدّل.
-          </div>
-          <table id="manualPriceTable">
-            <thead>
-              <tr>
-                <th data-i18n="material">المادة</th>
-                <th data-i18n="required_quantity">الكمية المطلوبة</th>
-                <th data-i18n="unit">الوحدة</th>
-                <th data-i18n="price">السعر (ريال)</th>
-                <th data-i18n="total">الإجمالي</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- يتم توليد الصفوف برمجياً -->
-            </tbody>
-            <tfoot>
-              <tr class="total-row">
-                <td colspan="4" data-i18n="grand_total">الإجمالي الكلي</td>
-                <td id="manualTotalCost">0</td>
-              </tr>
-            </tfoot>
-          </table>
-          <button id="calculateManualBtn" data-i18n="calculate_manual">احسب التكلفة اليدوية</button>
-        </div>
-        <!-- قسم الرسم البياني لتوزيع التكاليف -->
-        <div class="section">
-          <h2 data-i18n="cost_chart">الرسم البياني لتوزيع التكاليف</h2>
-          <canvas id="costChart" style="max-width: 600px; margin: 0 auto;"></canvas>
-        </div>
-        <!-- قسم الرسومات البيانية الإضافية -->
-        <div class="section" id="extraChartsSection">
-          <h2 data-i18n="extra_charts">رسومات بيانية إضافية</h2>
-          <canvas id="extraChart1" style="max-width: 600px; margin: 0 auto 20px;"></canvas>
-          <canvas id="extraChart2" style="max-width: 600px; margin: 0 auto 20px;"></canvas>
-          <canvas id="extraChart3" style="max-width: 600px; margin: 0 auto 20px;"></canvas>
-          <canvas id="extraChart4" style="max-width: 600px; margin: 0 auto;"></canvas>
-        </div>
-        <div class="share-buttons">
-          <button id="shareBtn" data-i18n="share">مشاركة عبر الواتساب</button>
-          <button id="printBtn" data-i18n="print">طباعة</button>
-          <button id="downloadBtn" data-i18n="download_excel">تنزيل ملف Excel</button>
-        </div>
-      </section>
-
-      <!-- قسم تفاصيل المشروع المتقدمة -->
-      <section id="advancedDetailsSection" style="display:none;">
-        <h1 data-i18n="advanced_details">تفاصيل المشروع المتقدمة</h1>
-        <div class="instructions" data-i18n="advanced_instructions">
-          أضف التفاصيل الكاملة للمشروع للحصول على تقدير دقيق يشمل جميع الجوانب وفقاً لأفضل المعايير العالمية.
-        </div>
-        <label for="projectLocation" data-i18n="project_location">موقع المشروع (المدينة/المنطقة):</label>
-        <input type="text" id="projectLocation" placeholder="أدخل موقع المشروع" />
-        <label for="projectLocationType" data-i18n="location_type">نوع الموقع:</label>
-        <select id="projectLocationType">
-          <option value="city" data-i18n="city">مدينة</option>
-          <option value="rural" data-i18n="rural">ريف</option>
-          <option value="remote" data-i18n="remote">منطقة نائية</option>
-          <option value="other" data-i18n="other">أخرى</option>
-        </select>
-        <div id="customLocationContainer" style="display:none;">
-          <label for="customLocation" data-i18n="custom_location">أدخل نوع الموقع الخاص:</label>
-          <input type="text" id="customLocation" placeholder="أدخل نوع الموقع" />
-        </div>
-        <label for="soilType" data-i18n="soil_type">نوع التربة:</label>
-        <select id="soilType">
-          <option value="sandy" data-i18n="sandy">رملية</option>
-          <option value="mountainous" data-i18n="mountainous">جبلية</option>
-          <option value="rocky" data-i18n="rocky">صخرية</option>
-          <option value="other" data-i18n="other">أخرى</option>
-        </select>
-        <label for="residentialArea" data-i18n="residential_area">مساحة المساكن (م²):</label>
-        <input type="number" id="residentialArea" placeholder="أدخل مساحة المساكن" />
-        <label for="servicesArea" data-i18n="services_area">مساحة الخدمات (م²):</label>
-        <input type="number" id="servicesArea" placeholder="أدخل مساحة الخدمات" />
-        <label for="parkingArea" data-i18n="parking_area">مساحة مواقف السيارات (م²):</label>
-        <input type="number" id="parkingArea" placeholder="أدخل مساحة مواقف السيارات" />
-        <label for="foundationType" data-i18n="foundation_type">نوع الأساسات:</label>
-        <select id="foundationType">
-          <option value="shallow" data-i18n="shallow">أساسات سطحية</option>
-          <option value="deep" data-i18n="deep">أساسات عميقة</option>
-          <option value="pile" data-i18n="pile">أساسات رصاصة</option>
-          <option value="special" data-i18n="special">أساسات خاصة</option>
-        </select>
-        <label for="finishQuality" data-i18n="finish_quality">جودة التشطيبات:</label>
-        <select id="finishQuality">
-          <option value="standard" data-i18n="standard">قياسية</option>
-          <option value="premium" data-i18n="premium">مميزة</option>
-          <option value="luxury" data-i18n="luxury">فاخرة</option>
-        </select>
-        <label for="constructionTime" data-i18n="construction_time">المدة المتوقعة للتنفيذ (بالشهور):</label>
-        <input type="number" id="constructionTime" placeholder="أدخل المدة المتوقعة" />
-        <label for="projectBudget" data-i18n="project_budget">ميزانية المشروع (ريال):</label>
-        <input type="number" id="projectBudget" placeholder="أدخل الميزانية المتوقعة" />
-        <label for="sustainability" data-i18n="sustainability">شهادات الاستدامة المطلوبة:</label>
-        <select id="sustainability">
-          <option value="none" data-i18n="none">لا يوجد</option>
-          <option value="leed" data-i18n="leed">LEED</option>
-          <option value="breeam" data-i18n="breeam">BREEAM</option>
-          <option value="other" data-i18n="other">أخرى</option>
-        </select>
-        <label for="safetyStandards" data-i18n="safety_standards">معايير الأمان والسلامة:</label>
-        <textarea id="safetyStandards" placeholder="أدخل متطلبات ومعايير الأمان والسلامة للمشروع"></textarea>
-        <button id="saveAdvancedBtn" data-i18n="save_advanced">حفظ تفاصيل المشروع المتقدمة</button>
-      </section>
-
-      <!-- قسم سجل الحسابات السابقة -->
-      <section id="historySection" style="display:none;">
-        <h1 data-i18n="history">سجل الحسابات السابقة</h1>
-        <div class="instructions" data-i18n="history_instructions">
-          تستعرض القائمة أدناه آخر الحسابات التي تم حفظها في المتصفح.
-        </div>
-        <ul id="historyList">
-          <!-- يتم توليد السجل برمجياً -->
-        </ul>
-        <button id="clearHistoryBtn" style="background-color: #c0392b;" data-i18n="clear_history">مسح السجل</button>
-      </section>
-
-      <!-- قسم دليل المستخدم -->
-      <section id="userManualSection" style="display:none;">
-        <h1 data-i18n="user_manual">دليل المستخدم</h1>
-        <div class="instructions">
-          <p data-i18n="manual_intro">
-            يوفر دليل المستخدم هذا شرحاً مفصلاً لكيفية استخدام النظام:
-          </p>
-          <ol>
-            <li data-i18n="manual_step1">
-              <strong data-i18n="manual_basic_data">بيانات المشروع الأساسية:</strong>
-              أدخل اسم المشروع (اختياري) ونوع المبنى مع تحديد النوع الدقيق (مثلاً فيلا أو شقة) والمساحات وعدد الأدوار وأنواع الهيكل، بالإضافة إلى خيار القبو وارتفاع الدور.
-            </li>
-            <li data-i18n="manual_step2">
-              <strong data-i18n="manual_advanced">تفاصيل المشروع المتقدمة:</strong>
-              انتقل إلى هذا القسم لإضافة تفاصيل إضافية مثل الموقع، نوع التربة، تقسيم المساحات، نوع الأساسات، جودة التشطيبات، المدة، والميزانية.
-            </li>
-            <li data-i18n="manual_step3">
-              <strong data-i18n="manual_result">نتائج الحساب:</strong>
-              يتم عرض التكلفة الإجمالية مع تفاصيل تكلفة كل مرحلة وتقدير الكميات المطلوبة، مع إمكانية تعديل الأسعار والكميات يدوياً.
-            </li>
-            <li data-i18n="manual_step4">
-              <strong data-i18n="manual_reports">التقارير والرسوم البيانية:</strong>
-              يعرض النظام رسومات بيانية توضح توزيع وتطور التكاليف، ويمكنك توليد تقرير PDF أو تنزيل النتائج كملف Excel.
-            </li>
-            <li data-i18n="manual_step5">
-              <strong data-i18n="manual_history">سجل الحسابات:</strong>
-              يحتفظ النظام بآخر 10 حسابات سابقة في المتصفح لسهولة الاسترجاع.
-            </li>
-            <li data-i18n="manual_step6">
-              <strong data-i18n="manual_components">التكاليف التفصيلية ومكونات المبنى:</strong>
-              يظهر جدول يوضح مكونات المبنى وكمياتها وتكاليفها وفقاً للمعايير الهندسية.
-            </li>
-          </ol>
-        </div>
-      </section>
-
-      <!-- قسم المعايير الدولية للبناء والتشييد -->
-      <section id="internationalStandardsSection" style="display:none;">
-        <h1 data-i18n="international_standards">المعايير الدولية للبناء والتشييد</h1>
-        <div class="instructions">
-          <p data-i18n="standards_intro">
-            يعتمد هذا النظام على أفضل المعايير العالمية لضمان جودة التصاميم ودقة الحسابات. فيما يلي بعض الإرشادات والمعايير المستخدمة:
-          </p>
-          <ul>
-            <li><strong>ISO 9001:</strong> نظام إدارة الجودة لضمان الالتزام بمعايير الجودة في كافة مراحل المشروع.</li>
-            <li><strong>ISO 14001:</strong> نظام الإدارة البيئية لتقليل الآثار البيئية للمشاريع.</li>
-            <li><strong>EN 1990 و EN 1991:</strong> معايير التصميم الإنشائي للأحمال والهندسة.</li>
-            <li><strong>ASTM & AISC:</strong> معايير البناء باستخدام الفولاذ والخرسانة لضمان المتانة والسلامة.</li>
-            <li><strong>LEED & BREEAM:</strong> إرشادات تصميم المباني الخضراء لضمان استدامة وكفاءة الطاقة.</li>
-          </ul>
-          <p data-i18n="standards_conclusion">
-            تُعتبر هذه المعايير إطاراً عاماً يساهم في تحسين جودة التصاميم وتقليل المخاطر الإنشائية، كما تساعد في تحقيق مشاريع تتماشى مع أفضل الممارسات العالمية.
-          </p>
-        </div>
-      </section>
-
-      <!-- قسم أهم التوجيهات والنصائح -->
-      <section id="guidelinesSection" style="display:none;">
-        <h1 data-i18n="guidelines">أهم التوجيهات والنصائح</h1>
-        <div class="instructions">
-          <p data-i18n="guidelines_intro">
-            فيما يلي بعض التوجيهات والنصائح لتنفيذ المشروع بكفاءة عالية مع ضمان الاستدامة وتقليل التكاليف:
-          </p>
-          <ul>
-            <li data-i18n="tip1">التخطيط المسبق وتحديد أهداف واضحة للمشروع قبل بدء التنفيذ.</li>
-            <li data-i18n="tip2">استخدام مواد بناء ذات جودة عالية وبأسعار تنافسية لتقليل الهدر.</li>
-            <li data-i18n="tip3">الاستفادة من أحدث التقنيات في إدارة المشروع والتصميم الإنشائي.</li>
-            <li data-i18n="tip4">تطبيق معايير الاستدامة في التصميم لتحقيق كفاءة في استهلاك الطاقة والموارد.</li>
-            <li data-i18n="tip5">العمل مع فريق متخصص من الخبراء لضمان الالتزام بالمعايير الدولية.</li>
-            <li data-i18n="tip6">مراجعة الحسابات والتقارير بانتظام لتحديد أي انحرافات واتخاذ الإجراءات التصحيحية.</li>
-            <li data-i18n="tip7">تطبيق أساليب البناء الحديثة لتقليل التكاليف وتحسين جودة التنفيذ.</li>
-          </ul>
-          <p data-i18n="guidelines_conclusion">
-            باتباع هذه النصائح، يمكنك تحقيق مشروع ناجح ومستدام مع الحفاظ على التكاليف ضمن الحدود المعقولة.
-          </p>
-        </div>
-      </section>
-      
-      <!-- قسم معلومات المواد مخفي -->
-      <section id="materialsSection" style="display:none;">
-      </section>
-    </div>
-  </main>
-
-  <footer>
-    <p data-i18n="footer_text">&copy; 2025 منصة الاتحاد العام للمقاولين اليمنيين. جميع الحقوق محفوظة.</p>
-  </footer>
-
-  <script>
-    // المتغير الخاص باللغة الحالية (افتراضي عربي)
-    let currentLanguage = 'ar';
-    // قاموس الترجمات للنصوص الثابتة
-    const translations = {
-      "main_title": { ar: "حاسبة البناء الذكية", en: "Smart Construction Calculator" },
-      "calculator": { ar: "الحاسبة", en: "Calculator" },
-      "advanced_details": { ar: "التفاصيل", en: "Advanced Details" },
-      "history": { ar: "السجل", en: "History" },
-      "user_manual": { ar: "الدليل", en: "User Manual" },
-      "international_standards": { ar: "المعايير", en: "International Standards" },
-      "guidelines": { ar: "التوجيهات", en: "Guidelines" },
-      "price_list": { ar: "الأسعار", en: "Price List" },
-      "dark_mode": { ar: "الوضع الليلي", en: "Dark Mode" },
-      "language_toggle": { ar: "English", en: "عربي" },
-      "choose_type": { ar: "اختر النوع", en: "Choose Type" },
-      "section_basic_data": { ar: "بيانات المشروع الأساسية", en: "Project Basic Data" },
-      "instructions_basic": { ar: "يرجى إدخال البيانات الأساسية للمشروع للحصول على تقدير أولي للتكلفة.", en: "Please enter the basic project data to get an initial cost estimate." },
-      "project_name": { ar: "اسم المشروع (اختياري):", en: "Project Name (Optional):" },
-      "building_type": { ar: "نوع المبنى:", en: "Building Type:" },
-      "detailed_building_type": { ar: "تحديد نوع المبنى:", en: "Specify Building Type:" },
-      "enter_custom_building": { ar: "أدخل نوع المبنى الخاص:", en: "Enter Custom Building Type:" },
-      "land_area": { ar: "المساحة الكلية للأرض (م²):", en: "Total Land Area (m²):" },
-      "built_area": { ar: "مساحة البناء (م²):", en: "Built Area (m²):" },
-      "number_of_floors": { ar: "عدد الأدوار العلوية:", en: "Number of Floors:" },
-      "structure_type": { ar: "نوع الهيكل:", en: "Structure Type:" },
-      "concrete": { ar: "خرسانة مسلحة", en: "Reinforced Concrete" },
-      "steel": { ar: "هيكل حديدي", en: "Steel Structure" },
-      "composite": { ar: "مركب", en: "Composite" },
-      "timber": { ar: "خشبي", en: "Timber" },
-      "construction_phase": { ar: "مرحلة البناء المطلوبة:", en: "Construction Phase:" },
-      "all_phases": { ar: "الكل (جميع المراحل)", en: "All Phases" },
-      "foundation": { ar: "أساسات", en: "Foundation" },
-      "structure": { ar: "عظم", en: "Structure" },
-      "finishing": { ar: "تشطيب", en: "Finishing" },
-      "electrical": { ar: "أعمال كهربائية", en: "Electrical Work" },
-      "plumbing": { ar: "أعمال سباكة", en: "Plumbing" },
-      "painting": { ar: "أعمال دهان", en: "Painting" },
-      "tiling": { ar: "أعمال بلاط", en: "Tiling" },
-      "doors": { ar: "أبواب", en: "Doors" },
-      "windows": { ar: "نوافذ", en: "Windows" },
-      "flooring": { ar: "أرضيات", en: "Flooring" },
-      "currency": { ar: "العملة:", en: "Currency:" },
-      "exchange_rate": { ar: "سعر الصرف (ريال/دولار):", en: "Exchange Rate:" },
-      "has_basement": { ar: "هل يوجد قبو؟", en: "Is there a Basement?" },
-      "no": { ar: "لا", en: "No" },
-      "yes": { ar: "نعم", en: "Yes" },
-      "basement_floors": { ar: "عدد الأدوار تحت الأرض:", en: "Basement Floors:" },
-      "floor_height": { ar: "ارتفاع الدور (متر):", en: "Floor Height (m):" },
-      "calculate_cost": { ar: "احسب التكلفة", en: "Calculate Cost" },
-      "reset": { ar: "إعادة تعيين", en: "Reset" },
-      "result": { ar: "النتيجة", en: "Result" },
-      "generate_pdf": { ar: "توليد تقرير PDF", en: "Generate PDF Report" },
-      "cost_details": { ar: "تفاصيل التكلفة", en: "Cost Details" },
-      "quantities_required": { ar: "تقدير الكميات المطلوبة", en: "Estimate Quantities" },
-      "required_quantity": { ar: "الكمية المطلوبة", en: "Required Quantity" },
-      "phase_cost": { ar: "تكلفة كل مرحلة", en: "Cost per Phase" },
-      "phase": { ar: "المرحلة", en: "Phase" },
-      "item": { ar: "البند", en: "Item" },
-      "general_estimates": { ar: "التقديرات العامة", en: "General Estimates" },
-      "summary": { ar: "الخلاصة", en: "Summary" },
-      "manual_cost": { ar: "حساب التكلفة وفقا لأسعار جديدة مُعدلة يدويًا", en: "Manual Cost Calculation" },
-      "manual_instructions": { ar: "يمكنك تعديل أسعار المواد وكمياتها يدويًا ثم الضغط على \"احسب التكلفة اليدوية\" للحصول على إجمالي التكلفة المُعدّل.", en: "You can manually adjust material prices and quantities then click \"Calculate Manual Cost\" to get the adjusted total cost." },
-      "calculate_manual": { ar: "احسب التكلفة اليدوية", en: "Calculate Manual Cost" },
-      "cost_chart": { ar: "الرسم البياني لتوزيع التكاليف", en: "Cost Distribution Chart" },
-      "extra_charts": { ar: "رسومات بيانية إضافية", en: "Additional Charts" },
-      "share": { ar: "مشاركة عبر الواتساب", en: "Share via WhatsApp" },
-      "print": { ar: "طباعة", en: "Print" },
-      "download_excel": { ar: "تنزيل ملف Excel", en: "Download Excel File" },
-      "project_location": { ar: "موقع المشروع (المدينة/المنطقة):", en: "Project Location (City/Region):" },
-      "location_type": { ar: "نوع الموقع:", en: "Location Type:" },
-      "custom_location": { ar: "أدخل نوع الموقع الخاص:", en: "Enter Custom Location:" },
-      "soil_type": { ar: "نوع التربة:", en: "Soil Type:" },
-      "sandy": { ar: "رملية", en: "Sandy" },
-      "mountainous": { ar: "جبلية", en: "Mountainous" },
-      "rocky": { ar: "صخرية", en: "Rocky" },
-      "residential_area": { ar: "مساحة المساكن (م²):", en: "Residential Area (m²):" },
-      "services_area": { ar: "مساحة الخدمات (م²):", en: "Services Area (m²):" },
-      "parking_area": { ar: "مساحة مواقف السيارات (م²):", en: "Parking Area (m²):" },
-      "foundation_type": { ar: "نوع الأساسات:", en: "Foundation Type:" },
-      "shallow": { ar: "أساسات سطحية", en: "Shallow" },
-      "deep": { ar: "أساسات عميقة", en: "Deep" },
-      "pile": { ar: "أساسات رصاصة", en: "Pile" },
-      "special": { ar: "أساسات خاصة", en: "Special" },
-      "finish_quality": { ar: "جودة التشطيبات:", en: "Finish Quality:" },
-      "standard": { ar: "قياسية", en: "Standard" },
-      "premium": { ar: "مميزة", en: "Premium" },
-      "luxury": { ar: "فاخرة", en: "Luxury" },
-      "construction_time": { ar: "المدة المتوقعة للتنفيذ (بالشهور):", en: "Expected Construction Time (months):" },
-      "project_budget": { ar: "ميزانية المشروع (ريال):", en: "Project Budget (Local Currency):" },
-      "sustainability": { ar: "شهادات الاستدامة المطلوبة:", en: "Sustainability Certifications:" },
-      "none": { ar: "لا يوجد", en: "None" },
-      "leed": { ar: "LEED", en: "LEED" },
-      "breeam": { ar: "BREEAM", en: "BREEAM" },
-      "safety_standards": { ar: "معايير الأمان والسلامة:", en: "Safety Standards:" },
-      "save_advanced": { ar: "حفظ تفاصيل المشروع المتقدمة", en: "Save Advanced Project Details" },
-      "history_instructions": { ar: "تستعرض القائمة أدناه آخر الحسابات التي تم حفظها في المتصفح.", en: "Below is a list of the last 10 saved calculations." },
-      "clear_history": { ar: "مسح السجل", en: "Clear History" },
-      "footer_text": { ar: "© 2025 منصة الاتحاد العام للمقاولين اليمنيين. جميع الحقوق محفوظة.", en: "© 2025 Yemeni Contractors Association Platform. All rights reserved." }
-    };
-
-    // دالة تطبيق الترجمة على كافة العناصر التي تحمل data-i18n
-    function translatePage() {
-      document.querySelectorAll('[data-i18n]').forEach(elem => {
-        const key = elem.getAttribute('data-i18n');
-        if (translations[key] && translations[key][currentLanguage]) {
-          elem.innerText = translations[key][currentLanguage];
-        }
-      });
-    }
-
-    // دالة تبديل اللغة
-    function toggleLanguage() {
-      currentLanguage = currentLanguage === 'ar' ? 'en' : 'ar';
-      const languageToggle = document.getElementById('languageToggle');
-      const langTitle = languageToggle.querySelector('.title');
-      langTitle.innerText = translations["language_toggle"][currentLanguage];
-      document.body.setAttribute('dir', currentLanguage === 'ar' ? 'rtl' : 'ltr');
-      translatePage();
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      /* ===== التبويبات ===== */
-      const tabLinks = document.querySelectorAll('.tab-link');
-      const sections = document.querySelectorAll('main section');
-      tabLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          tabLinks.forEach(l => l.classList.remove('active'));
-          link.classList.add('active');
-          const target = link.getAttribute('data-target');
-          sections.forEach(sec => {
-            sec.style.display = sec.id === target ? 'block' : 'none';
-          });
-        });
-      });
-
-      /* ===== عناصر قسم الحاسبة الأساسية ===== */
-      const projectNameEl = document.getElementById('projectName');
-      const buildingTypeEl = document.getElementById('buildingType');
-      const detailedBuildingTypeEl = document.getElementById('detailedBuildingType');
-      const customDetailedBuildingTypeEl = document.getElementById('customDetailedBuildingType');
-      const customDetailedBuildingTypeContainer = document.getElementById('customDetailedBuildingTypeContainer');
-      const landAreaEl = document.getElementById('landArea');
-      const builtAreaEl = document.getElementById('builtArea');
-      const floorsEl = document.getElementById('floors');
-      const structureTypeEl = document.getElementById('structureType');
-      const constructionPhaseEl = document.getElementById('constructionPhase');
-      const currencyEl = document.getElementById('currency');
-      const exchangeRateEl = document.getElementById('exchangeRate');
-      const totalCostEl = document.getElementById('totalCost');
-      const costDetailsEl = document.getElementById('costDetails');
-      const quantityTableBody = document.querySelector('#quantityTable tbody');
-      const phaseCostTableBody = document.querySelector('#phaseCostTable tbody');
-      const manualPriceTableBody = document.getElementById('manualPriceTable').querySelector('tbody');
-      const manualTotalCostEl = document.getElementById('manualTotalCost');
-
-      const calculateBtn = document.getElementById('calculateBtn');
-      const resetBtn = document.getElementById('resetBtn');
-      const calculateManualBtn = document.getElementById('calculateManualBtn');
-      const shareBtn = document.getElementById('shareBtn');
-      const printBtn = document.getElementById('printBtn');
-      const downloadBtn = document.getElementById('downloadBtn');
-      const generatePDFBtn = document.getElementById('generatePDFBtn');
-
-      /* ===== عناصر خيار القبو ===== */
-      const hasBasementEl = document.getElementById('hasBasement');
-      const basementContainer = document.getElementById('basementContainer');
-      const basementFloorsEl = document.getElementById('basementFloors');
-
-      /* ===== عناصر تحديد ارتفاع الدور ===== */
-      const floorHeightEl = document.getElementById('floorHeight');
-
-      /* ===== عناصر قسم التفاصيل المتقدمة ===== */
-      const projectLocationEl = document.getElementById('projectLocation');
-      const projectLocationTypeEl = document.getElementById('projectLocationType');
-      const customLocationContainer = document.getElementById('customLocationContainer');
-      const soilTypeEl = document.getElementById('soilType');
-      const residentialAreaEl = document.getElementById('residentialArea');
-      const servicesAreaEl = document.getElementById('servicesArea');
-      const parkingAreaEl = document.getElementById('parkingArea');
-      const foundationTypeEl = document.getElementById('foundationType');
-      const finishQualityEl = document.getElementById('finishQuality');
-      const constructionTimeEl = document.getElementById('constructionTime');
-      const projectBudgetEl = document.getElementById('projectBudget');
-      const sustainabilityEl = document.getElementById('sustainability');
-      const safetyStandardsEl = document.getElementById('safetyStandards');
-      const saveAdvancedBtn = document.getElementById('saveAdvancedBtn');
-
-      /* ===== قسم عرض التكاليف التفصيلية ===== */
-      const detailedCostTableBody = document.querySelector('#detailedCostTable tbody');
-
-      /* ===== قسم جدول مكونات المبنى ===== */
-      const detailedElementsTableBody = document.querySelector('#detailedElementsTable tbody');
-
-      /* ===== قسم الخلاصة ===== */
-      const summaryTotalYEREl = document.getElementById('summaryTotalYER');
-      const summaryTotalUSDEl = document.getElementById('summaryTotalUSD');
-      const summaryCostPerSqYEREl = document.getElementById('summaryCostPerSqYER');
-      const summaryCostPerSqUSDEl = document.getElementById('summaryCostPerSqUSD');
-
-      /* ===== عناصر الرسومات البيانية ===== */
-      const costChartCanvas = document.getElementById('costChart');
-      const extraChart1Canvas = document.getElementById('extraChart1');
-      const extraChart2Canvas = document.getElementById('extraChart2');
-      const extraChart3Canvas = document.getElementById('extraChart3');
-      const extraChart4Canvas = document.getElementById('extraChart4');
-
-      /* ===== بيانات الأسعار الافتراضية ومصفوفة المواد ===== */
-      let materialPrices = {
-        concrete: 5000,
-        steel: 80000,
-        cement: 6000,
-        bricks: 500,
-        blocks: 300,
-        paint: 100,
-        tiles: 200,
-        doors: 5000,
-        windows: 3000,
-        flooring: 150
-      };
-
-      const materials = [
-        { name: 'الخرسانة', key: 'concrete', unit: 'م³' },
-        { name: 'الحديد', key: 'steel', unit: 'طن' },
-        { name: 'الأسمنت', key: 'cement', unit: 'طن' },
-        { name: 'الطوب', key: 'bricks', unit: 'طوبة' },
-        { name: 'البلوك', key: 'blocks', unit: 'بلوك' },
-        { name: 'الدهان', key: 'paint', unit: 'لتر' },
-        { name: 'البلاط', key: 'tiles', unit: 'م²' },
-        { name: 'الأبواب', key: 'doors', unit: 'باب' },
-        { name: 'النوافذ', key: 'windows', unit: 'نافذة' },
-        { name: 'الأرضيات', key: 'flooring', unit: 'م²' }
-      ];
-
-      /* ===== معايير تكلفة البناء بعد رفع التكلفة بنسبة 100% ===== */
-      const buildingCosts = {
-        residential: {
-          foundation: 25000,
-          structure: 75000,
-          finishing: 50000,
-          electrical: 10000,
-          plumbing: 7500,
-          painting: 5000,
-          tiling: 12500,
-          doors: 2500,
-          windows: 1500,
-          flooring: 7500
-        },
-        commercial: {
-          foundation: 30000,
-          structure: 90000,
-          finishing: 60000,
-          electrical: 12500,
-          plumbing: 10000,
-          painting: 7500,
-          tiling: 15000,
-          doors: 3000,
-          windows: 2000,
-          flooring: 10000
-        },
-        service: {
-          foundation: 35000,
-          structure: 100000,
-          finishing: 75000,
-          electrical: 15000,
-          plumbing: 12500,
-          painting: 10000,
-          tiling: 17500,
-          doors: 3500,
-          windows: 2500,
-          flooring: 12500
-        },
-        industrial: {
-          foundation: 40000,
-          structure: 125000,
-          finishing: 75000,
-          electrical: 15000,
-          plumbing: 12500,
-          painting: 7500,
-          tiling: 15000,
-          doors: 3500,
-          windows: 2500,
-          flooring: 10000
-        },
-        public: {
-          foundation: 37500,
-          structure: 110000,
-          finishing: 65000,
-          electrical: 14000,
-          plumbing: 11000,
-          painting: 6000,
-          tiling: 14000,
-          doors: 3250,
-          windows: 2250,
-          flooring: 9000
-        }
-      };
-
-      async function fetchPrices() {
-        try {
-          const response = await fetch('https://guyc-yemen.com/price-guide/');
-          if (!response.ok) throw new Error("فشل في جلب البيانات من الخادم");
-          const data = await response.json();
-          if (data.prices) materialPrices = data.prices;
-        } catch (error) {
-          console.warn("تعذر جلب الأسعار من الخادم. سيتم استخدام الأسعار الافتراضية.");
-        }
-      }
-
-      buildingTypeEl.addEventListener('change', () => {
-        let options = '<option value="" data-i18n="choose_type"></option>';
-        switch(buildingTypeEl.value) {
-          case 'residential':
-            options += `<option value="فيلا">فيلا</option>
-                        <option value="شقة">شقة</option>
-                        <option value="منزل شعبي">منزل شعبي</option>
-                        <option value="أخرى">أخرى</option>`;
-            break;
-          case 'commercial':
-            options += `<option value="محل">محل</option>
-                        <option value="مستودع">مستودع</option>
-                        <option value="أخرى">أخرى</option>`;
-            break;
-          case 'service':
-            options += `<option value="مدرسة">مدرسة</option>
-                        <option value="مستشفى">مستشفى</option>
-                        <option value="أخرى">أخرى</option>`;
-            break;
-          case 'industrial':
-            options += `<option value="مصنع">مصنع</option>
-                        <option value="مخزن">مخزن</option>
-                        <option value="أخرى">أخرى</option>`;
-            break;
-          case 'public':
-            options += `<option value="مبنى حكومي">مبنى حكومي</option>
-                        <option value="منشأة عامة">منشأة عامة</option>
-                        <option value="أخرى">أخرى</option>`;
-            break;
-          default:
-            options = '<option value="" data-i18n="choose_type"></option>';
-        }
-        detailedBuildingTypeEl.innerHTML = options;
-      });
-
-      detailedBuildingTypeEl.addEventListener('change', () => {
-        if(detailedBuildingTypeEl.value === "أخرى") {
-          customDetailedBuildingTypeContainer.style.display = 'block';
-        } else {
-          customDetailedBuildingTypeContainer.style.display = 'none';
-        }
-      });
-
-      function estimateQuantities(builtArea, floors, structureType, floorHeight = 3) {
-        let multiplier = floorHeight / 3;
-        let quantities = {
-          concrete: builtArea * 0.2 * floors * multiplier,
-          steel: builtArea * 0.05 * floors * multiplier,
-          cement: builtArea * 0.1 * floors * multiplier,
-          bricks: builtArea * 100 * floors * multiplier,
-          blocks: builtArea * 50 * floors * multiplier,
-          paint: builtArea * 0.5 * floors * multiplier,
-          tiles: builtArea * floors * multiplier,
-          doors: (builtArea / 10) * floors * multiplier,
-          windows: (builtArea / 10) * floors * multiplier,
-          flooring: builtArea * floors * multiplier
-        };
-        if (structureType === "steel") {
-          quantities.concrete = builtArea * 0.1 * floors * multiplier;
-          quantities.steel = builtArea * 0.1 * floors * multiplier;
-        }
-        for (let key in quantities) {
-          quantities[key] = parseFloat(quantities[key].toFixed(2));
-        }
-        return quantities;
-      }
-
-      function calculateCost() {
-        const builtArea = parseFloat(builtAreaEl.value);
-        if (!builtArea || builtArea <= 0) {
-          alert("الرجاء إدخال مساحة بناء صحيحة.");
-          return;
-        }
-        const floors = parseFloat(floorsEl.value) || 1;
-        const floorHeight = parseFloat(floorHeightEl.value) || 3;
-        const structureType = structureTypeEl.value;
-        const buildingType = buildingTypeEl.value;
-        const constructionPhase = constructionPhaseEl.value;
-        const currency = currencyEl.value;
-        const exchangeRate = parseFloat(exchangeRateEl.value) || 1;
-
-        let phaseCosts = {
-          foundation: buildingCosts[buildingType].foundation * builtArea * floors,
-          structure: buildingCosts[buildingType].structure * builtArea * floors,
-          finishing: buildingCosts[buildingType].finishing * builtArea * floors,
-          electrical: buildingCosts[buildingType].electrical * builtArea * floors,
-          plumbing: buildingCosts[buildingType].plumbing * builtArea * floors,
-          painting: buildingCosts[buildingType].painting * builtArea * floors,
-          tiling: buildingCosts[buildingType].tiling * builtArea * floors,
-          doors: buildingCosts[buildingType].doors * builtArea * floors,
-          windows: buildingCosts[buildingType].windows * builtArea * floors,
-          flooring: buildingCosts[buildingType].flooring * builtArea * floors
-        };
-        if (structureType === "steel") {
-          phaseCosts.structure = (buildingCosts[buildingType].structure * 1.2) * builtArea * floors;
-        }
-        let foundationMultiplier = 1;
-        if (foundationTypeEl) {
-          switch(foundationTypeEl.value) {
-            case "deep": foundationMultiplier = 1.2; break;
-            case "pile": foundationMultiplier = 1.3; break;
-            case "special": foundationMultiplier = 1.4; break;
-            default: foundationMultiplier = 1;
-          }
-          phaseCosts.foundation *= foundationMultiplier;
-        }
-        let finishMultiplier = 1;
-        if (finishQualityEl) {
-          switch(finishQualityEl.value) {
-            case "premium": finishMultiplier = 1.15; break;
-            case "luxury": finishMultiplier = 1.3; break;
-            default: finishMultiplier = 1;
-          }
-          phaseCosts.finishing *= finishMultiplier;
-        }
-        let basementCost = 0;
-        if (hasBasementEl.value === "yes") {
-          let basementFloors = parseFloat(basementFloorsEl.value) || 0;
-          basementCost = basementFloors * builtArea * 200;
-          phaseCosts['basement'] = basementCost;
-        }
-        if (soilTypeEl) {
-          let soilType = soilTypeEl.value;
-          let soilMultiplier = 0;
-          if (soilType === "sandy") soilMultiplier = 0.1;
-          else if (soilType === "mountainous") soilMultiplier = 0.15;
-          else if (soilType === "rocky") soilMultiplier = 0.2;
-          else soilMultiplier = 0.1;
-          phaseCosts.foundation *= (1 + soilMultiplier);
-        }
-        if (projectLocationTypeEl) {
-          let locationType = projectLocationTypeEl.value;
-          let locationMultiplier = 1;
-          if (locationType === "rural") locationMultiplier = 0.95;
-          else if (locationType === "remote") locationMultiplier = 1.1;
-          else locationMultiplier = 1;
-          for (let phase in phaseCosts) {
-            phaseCosts[phase] *= locationMultiplier;
-          }
-        }
-        let totalCost = 0;
-        let selectedPhaseCosts = {};
-        if (constructionPhase === "all") {
-          totalCost = Object.values(phaseCosts).reduce((sum, cost) => sum + cost, 0);
-          selectedPhaseCosts = phaseCosts;
-        } else {
-          totalCost = phaseCosts[constructionPhase];
-          selectedPhaseCosts[constructionPhase] = phaseCosts[constructionPhase];
-        }
-        if (currency === 'USD') {
-          totalCost /= exchangeRate;
-          for (let phase in selectedPhaseCosts) {
-            selectedPhaseCosts[phase] /= exchangeRate;
-          }
-        }
-        totalCostEl.innerText = `التكلفة الإجمالية: ${totalCost.toLocaleString()} ${currency}`;
-        const phaseNames = {
-          foundation: "الأساسات",
-          structure: "الهيكل",
-          finishing: "التشطيبات",
-          electrical: "الكهرباء",
-          plumbing: "السباكة",
-          painting: "الدهان",
-          tiling: "البلاط",
-          doors: "الأبواب",
-          windows: "النوافذ",
-          flooring: "الأرضيات",
-          basement: "القبو"
-        };
-        costDetailsEl.innerHTML = Object.keys(selectedPhaseCosts).map(phase => 
-          `<li>${phaseNames[phase]}: ${selectedPhaseCosts[phase].toLocaleString()} ${currency}</li>`
-        ).join("");
-        const quantities = estimateQuantities(builtArea, floors, structureType, floorHeight);
-        quantityTableBody.innerHTML = materials.map(mat => `
-          <tr>
-            <td>${mat.name}</td>
-            <td>${quantities[mat.key]}</td>
-            <td>${mat.unit}</td>
-          </tr>
-        `).join("");
-        phaseCostTableBody.innerHTML = Object.keys(selectedPhaseCosts).map(phase => `
-          <tr>
-            <td>${phaseNames[phase]}</td>
-            <td>${selectedPhaseCosts[phase].toLocaleString()} ${currency}</td>
-          </tr>
-        `).join("");
-        updateManualPriceTable(quantities);
-        updateCostChart(selectedPhaseCosts, currency);
-        updateDetailedElementsTable(selectedPhaseCosts, currency);
-        updateSummary(totalCost, builtArea, currency, exchangeRate);
-        updateAllExtraCharts(selectedPhaseCosts, currency);
-        
-        let planningCost = 0.1 * totalCost;
-        let profitMargin = 0.1 * totalCost;
-        let materialCost = 0;
-        for (let key in quantities) {
-          if(materialPrices[key]) {
-            materialCost += quantities[key] * materialPrices[key];
-          }
-        }
-        let laborCost = totalCost - (planningCost + profitMargin + materialCost);
-        let generalEstimatesHTML = `
-          <tr>
-            <td>تكاليف التخطيط والتصميم</td>
-            <td>${planningCost.toLocaleString()} ${currency}</td>
-          </tr>
-          <tr>
-            <td>قيمة المواد</td>
-            <td>${materialCost.toLocaleString()} ${currency}</td>
-          </tr>
-          <tr>
-            <td>تكاليف الأيدي العاملة</td>
-            <td>${laborCost.toLocaleString()} ${currency}</td>
-          </tr>
-          <tr>
-            <td>هامش الربح</td>
-            <td>${profitMargin.toLocaleString()} ${currency}</td>
-          </tr>
-          <tr class="total-row">
-            <td>الإجمالي الكلي</td>
-            <td>${totalCost.toLocaleString()} ${currency}</td>
-          </tr>
-        `;
-        document.querySelector('#detailedCostTable tbody').innerHTML = generalEstimatesHTML;
-        
-        saveCalculation({
-          projectName: projectNameEl.value || "غير محدد",
-          buildingType: buildingTypeEl.value,
-          builtArea, floors, structureType, constructionPhase,
-          currency, exchangeRate,
-          totalCost,
-          advancedDetails: {
-            projectLocation: projectLocationEl ? projectLocationEl.value : "",
-            projectLocationType: projectLocationTypeEl ? projectLocationTypeEl.value : "",
-            soilType: soilTypeEl ? soilTypeEl.value : "",
-            residentialArea: residentialAreaEl ? parseFloat(residentialAreaEl.value) : 0,
-            servicesArea: servicesAreaEl ? parseFloat(servicesAreaEl.value) : 0,
-            parkingArea: parkingAreaEl ? parseFloat(parkingAreaEl.value) : 0,
-            foundationType: foundationTypeEl ? foundationTypeEl.value : "",
-            finishQuality: finishQualityEl ? finishQualityEl.value : "",
-            constructionTime: constructionTimeEl ? parseFloat(constructionTimeEl.value) : 0,
-            projectBudget: projectBudgetEl ? parseFloat(projectBudgetEl.value) : 0,
-            sustainability: sustainabilityEl ? sustainabilityEl.value : "",
-            safetyStandards: safetyStandardsEl ? safetyStandardsEl.value : "",
-            landArea: landAreaEl ? parseFloat(landAreaEl.value) : 0,
-            builtArea: builtArea,
-            hasBasement: hasBasementEl ? hasBasementEl.value : "no",
-            basementFloors: basementFloorsEl ? parseFloat(basementFloorsEl.value) : 0,
-            floorHeight: floorHeight,
-          },
-          timestamp: new Date().toLocaleString()
-        });
-      }
-
-      function updateManualPriceTable(quantities) {
-        manualPriceTableBody.innerHTML = materials.map(mat => `
-          <tr>
-            <td>${mat.name}</td>
-            <td><input type="number" id="manualQty_${mat.key}" value="${quantities[mat.key]}" style="width:60px;" /></td>
-            <td>${mat.unit}</td>
-            <td><input type="number" id="manualPrice_${mat.key}" placeholder="أدخل السعر" /></td>
-            <td id="manualTotal_${mat.key}">0</td>
-          </tr>
-        `).join("");
-      }
-
-      function calculateManualCost() {
-        let totalManualCost = 0;
-        materials.forEach((mat, index) => {
-          const qty = parseFloat(document.getElementById(`manualQty_${mat.key}`).value) || 0;
-          const price = parseFloat(document.getElementById(`manualPrice_${mat.key}`).value) || 0;
-          const total = qty * price;
-          document.getElementById(`manualTotal_${mat.key}`).innerText = total.toLocaleString();
-          totalManualCost += total;
-        });
-        manualTotalCostEl.innerText = totalManualCost.toLocaleString();
-      }
-
-      let costChart;
-      function updateCostChart(phaseCosts, currency) {
-        const ctx = costChartCanvas.getContext('2d');
-        const labels = Object.keys(phaseCosts).map(key => {
-          const map = {
-            foundation: "الأساسات",
-            structure: "الهيكل",
-            finishing: "التشطيبات",
-            electrical: "الكهرباء",
-            plumbing: "السباكة",
-            painting: "الدهان",
-            tiling: "البلاط",
-            doors: "الأبواب",
-            windows: "النوافذ",
-            flooring: "الأرضيات",
-            basement: "القبو"
-          };
-          return map[key] || key;
-        });
-        const dataValues = Object.values(phaseCosts);
-        if (costChart) {
-          costChart.data.labels = labels;
-          costChart.data.datasets[0].data = dataValues;
-          costChart.options.plugins.title.text = `توزيع التكاليف (${currency})`;
-          costChart.update();
-        } else {
-          costChart = new Chart(ctx, {
-            type: 'pie',
-            data: {
-              labels: labels,
-              datasets: [{
-                label: 'تكلفة كل مرحلة',
-                data: dataValues,
-                backgroundColor: [
-                  '#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff',
-                  '#ff9f40', '#c9cbcf', '#8B4513', '#A0522D', '#2ecc71',
-                  '#7f8c8d'
-                ]
-              }]
-            },
-            options: {
-              responsive: true,
-              plugins: {
-                legend: { position: 'bottom' },
-                title: {
-                  display: true,
-                  text: `توزيع التكاليف (${currency})`
-                }
-              }
-            }
-          });
-        }
-      }
-
-      function updateDetailedElementsTable(phaseCosts, currency) {
-        const builtAreaVal = parseFloat(builtAreaEl.value);
-        const floorsVal = parseFloat(floorsEl.value) || 1;
-        const q1 = builtAreaVal * floorsVal * 0.1;
-        const c1 = phaseCosts.foundation ? phaseCosts.foundation * 0.6 : 0;
-        const q2 = builtAreaVal * floorsVal * 0.15;
-        const c2 = phaseCosts.structure ? phaseCosts.structure * 0.5 : 0;
-        const q3 = builtAreaVal;
-        const c3 = phaseCosts.structure ? phaseCosts.structure * 0.5 : 0;
-        const q4 = builtAreaVal * floorsVal * 0.8;
-        const c4 = phaseCosts.finishing ? phaseCosts.finishing * 0.4 : 0;
-        const q5 = builtAreaVal * 0.8;
-        const c5 = phaseCosts.finishing ? phaseCosts.finishing * 0.4 : 0;
-        const q6 = builtAreaVal * floorsVal * 0.2;
-        const c6 = phaseCosts.painting ? phaseCosts.painting : 0;
-        const q7 = builtAreaVal * floorsVal;
-        const c7 = phaseCosts.tiling ? phaseCosts.tiling : 0;
-        const q8 = builtAreaVal * floorsVal * 0.15;
-        const c8 = phaseCosts.finishing ? phaseCosts.finishing * 0.2 : 0;
-        const q9 = builtAreaVal * floorsVal * 0.05;
-        const c9 = phaseCosts.electrical ? phaseCosts.electrical : 0;
-        const q10 = builtAreaVal * floorsVal * 0.5;
-        const c10 = phaseCosts.finishing ? phaseCosts.finishing : 0;
-
-        const detailedElements = [
-          { element: "القواعد", quantity: q1.toFixed(2), cost: c1.toLocaleString() + " " + currency },
-          { element: "العمدان", quantity: q2.toFixed(2), cost: c2.toLocaleString() + " " + currency },
-          { element: "الأسطح", quantity: q3.toFixed(2), cost: c3.toLocaleString() + " " + currency },
-          { element: "الجدران الداخلية", quantity: q4.toFixed(2), cost: c4.toLocaleString() + " " + currency },
-          { element: "الجدران الخارجية", quantity: q5.toFixed(2), cost: c5.toLocaleString() + " " + currency },
-          { element: "أعمال التلابيس والرنج", quantity: q6.toFixed(2), cost: c6.toLocaleString() + " " + currency },
-          { element: "أعمال البلاط", quantity: q7.toFixed(2), cost: c7.toLocaleString() + " " + currency },
-          { element: "أعمال الصحيات والعوازل", quantity: q8.toFixed(2), cost: c8.toLocaleString() + " " + currency },
-          { element: "أعمال الكهرباء", quantity: q9.toFixed(2), cost: c9.toLocaleString() + " " + currency },
-          { element: "التشطيبات", quantity: q10.toFixed(2), cost: c10.toLocaleString() + " " + currency }
-        ];
-        detailedElementsTableBody.innerHTML = detailedElements.map(item => `
-          <tr>
-            <td>${item.element}</td>
-            <td>${item.quantity}</td>
-            <td>${item.cost}</td>
-          </tr>
-        `).join("");
-      }
-
-      function updateSummary(totalCost, builtArea, currency, exchangeRate) {
-        let totalCostYER, totalCostUSD;
-        if (currency === 'YER') {
-          totalCostYER = totalCost;
-          totalCostUSD = totalCost / exchangeRate;
-        } else {
-          totalCostUSD = totalCost;
-          totalCostYER = totalCost * exchangeRate;
-        }
-        summaryTotalYEREl.innerText = `التكلفة الإجمالية (ريال): ${totalCostYER.toLocaleString()} ريال`;
-        summaryTotalUSDEl.innerText = `التكلفة الإجمالية (دولار): ${totalCostUSD.toLocaleString()} دولار`;
-        const costPerSqYER = totalCostYER / builtArea;
-        const costPerSqUSD = totalCostUSD / builtArea;
-        summaryCostPerSqYEREl.innerText = `تكلفة المتر الواحد (ريال): ${costPerSqYER.toLocaleString()} ريال/م²`;
-        summaryCostPerSqUSDEl.innerText = `تكلفة المتر الواحد (دولار): ${costPerSqUSD.toLocaleString()} دولار/م²`;
-      }
-
-      function updateExtraChart1(phaseCosts, currency) {
-        const ctx = extraChart1Canvas.getContext('2d');
-        const labels = Object.keys(phaseCosts).map(key => {
-          const map = {
-            foundation: "الأساسات",
-            structure: "الهيكل",
-            finishing: "التشطيبات",
-            electrical: "الكهرباء",
-            plumbing: "السباكة",
-            painting: "الدهان",
-            tiling: "البلاط",
-            doors: "الأبواب",
-            windows: "النوافذ",
-            flooring: "الأرضيات",
-            basement: "القبو"
-          };
-          return map[key] || key;
-        });
-        const dataValues = Object.values(phaseCosts);
-        new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: `تكاليف المراحل (${currency})`,
-              data: dataValues,
-              backgroundColor: [
-                '#3498db', '#e74c3c', '#f1c40f', '#2ecc71', '#9b59b6',
-                '#e67e22', '#1abc9c', '#34495e', '#16a085', '#d35400'
-              ]
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: { display: false },
-              title: { display: true, text: `التكاليف حسب المراحل (${currency})` }
-            },
-            scales: {
-              y: { beginAtZero: true },
-              x: {}
-            }
-          }
-        });
-      }
-
-      function updateExtraChart2(phaseCosts, currency) {
-        const ctx = extraChart2Canvas.getContext('2d');
-        const labels = Object.keys(phaseCosts).map(key => {
-          const map = {
-            foundation: "الأساسات",
-            structure: "الهيكل",
-            finishing: "التشطيبات",
-            electrical: "الكهرباء",
-            plumbing: "السباكة",
-            painting: "الدهان",
-            tiling: "البلاط",
-            doors: "الأبواب",
-            windows: "النوافذ",
-            flooring: "الأرضيات",
-            basement: "القبو"
-          };
-          return map[key] || key;
-        });
-        const dataValues = Object.values(phaseCosts);
-        new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: `تطور التكاليف (${currency})`,
-              data: dataValues,
-              borderColor: '#8e44ad',
-              backgroundColor: 'rgba(142, 68, 173, 0.2)',
-              fill: true,
-              tension: 0.3
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: { display: true },
-              title: { display: true, text: `تطور التكاليف (${currency})` }
-            },
-            scales: {
-              y: { beginAtZero: true },
-              x: {}
-            }
-          }
-        });
-      }
-
-      function updateExtraChart3(phaseCosts, currency) {
-        const ctx = extraChart3Canvas.getContext('2d');
-        const labels = Object.keys(phaseCosts).map(key => {
-          const map = {
-            foundation: "الأساسات",
-            structure: "الهيكل",
-            finishing: "التشطيبات",
-            electrical: "الكهرباء",
-            plumbing: "السباكة",
-            painting: "الدهان",
-            tiling: "البلاط",
-            doors: "الأبواب",
-            windows: "النوافذ",
-            flooring: "الأرضيات",
-            basement: "القبو"
-          };
-          return map[key] || key;
-        });
-        const dataValues = Object.values(phaseCosts);
-        new Chart(ctx, {
-          type: 'doughnut',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: `نسبة التكاليف (${currency})`,
-              data: dataValues,
-              backgroundColor: [
-                '#1abc9c', '#2ecc71', '#3498db', '#9b59b6', '#34495e',
-                '#e74c3c', '#e67e22', '#f1c40f', '#16a085', '#d35400'
-              ]
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: { position: 'bottom' },
-              title: { display: true, text: `نسبة التكاليف (${currency})` }
-            }
-          }
-        });
-      }
-
-      function updateExtraChart4(phaseCosts, currency) {
-        const ctx = extraChart4Canvas.getContext('2d');
-        const labels = Object.keys(phaseCosts).map(key => {
-          const map = {
-            foundation: "الأساسات",
-            structure: "الهيكل",
-            finishing: "التشطيبات",
-            electrical: "الكهرباء",
-            plumbing: "السباكة",
-            painting: "الدهان",
-            tiling: "البلاط",
-            doors: "الأبواب",
-            windows: "النوافذ",
-            flooring: "الأرضيات",
-            basement: "القبو"
-          };
-          return map[key] || key;
-        });
-        const dataValues = Object.values(phaseCosts);
-        new Chart(ctx, {
-          type: 'radar',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: `المقارنة (${currency})`,
-              data: dataValues,
-              backgroundColor: 'rgba(231, 76, 60, 0.2)',
-              borderColor: '#e74c3c',
-              pointBackgroundColor: '#e74c3c'
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: { display: true },
-              title: { display: true, text: `المقارنة بين المراحل (${currency})` }
-            },
-            scales: {
-              r: { beginAtZero: true }
-            }
-          }
-        });
-      }
-
-      function updateAllExtraCharts(phaseCosts, currency) {
-        updateExtraChart1(phaseCosts, currency);
-        updateExtraChart2(phaseCosts, currency);
-        updateExtraChart3(phaseCosts, currency);
-        updateExtraChart4(phaseCosts, currency);
-      }
-
-      function shareOnWhatsApp() {
-        const message = `حاسبة البناء - ${totalCostEl.innerText}\n\n${window.location.href}`;
-        const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
-        window.open(url, '_blank');
-      }
-
-      function downloadExcel() {
-        const totalCostText = totalCostEl.innerText;
-        const detailsText = costDetailsEl.innerText;
-        const quantitiesText = document.getElementById('quantityTable').innerText;
-        const phaseCostsText = document.getElementById('phaseCostTable').innerText;
-        const data = [
-          ["التكلفة الإجمالية", totalCostText],
-          ["تفاصيل التكلفة", detailsText],
-          ["الكميات المطلوبة", quantitiesText],
-          ["تكلفة كل مرحلة", phaseCostsText]
-        ];
-        const ws = XLSX.utils.aoa_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "النتيجة");
-        XLSX.writeFile(wb, "حاسبة_البناء.xlsx");
-      }
-
-      function generatePDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        doc.setFontSize(16);
-        doc.text("تقرير حاسبة البناء", 105, 20, { align: "center" });
-        doc.setFontSize(12);
-        doc.text(totalCostEl.innerText, 105, 30, { align: "center" });
-        doc.text("تفاصيل التكلفة:", 20, 50);
-        doc.text(costDetailsEl.innerText, 20, 60);
-        doc.save("تقرير_حاسبة_البناء.pdf");
-      }
-
-      function saveCalculation(calcData) {
-        let history = JSON.parse(localStorage.getItem('calcHistory')) || [];
-        history.unshift(calcData);
-        if (history.length > 10) history = history.slice(0, 10);
-        localStorage.setItem('calcHistory', JSON.stringify(history));
-        updateHistoryList();
-      }
-
-      function updateHistoryList() {
-        const historyList = document.getElementById('historyList');
-        const history = JSON.parse(localStorage.getItem('calcHistory')) || [];
-        if (history.length === 0) {
-          historyList.innerHTML = "<li>لا توجد حسابات محفوظة.</li>";
-        } else {
-          historyList.innerHTML = history.map(item =>
-            `<li>[${item.timestamp}] مشروع: ${item.projectName} - التكلفة: ${item.totalCost ? item.totalCost.toLocaleString() : ''}</li>`
-          ).join("");
-        }
-      }
-
-      function resetForm() {
-        projectNameEl.value = "";
-        builtAreaEl.value = "";
-        floorsEl.value = "";
-        exchangeRateEl.value = "";
-        totalCostEl.innerText = "";
-        costDetailsEl.innerHTML = "";
-        quantityTableBody.innerHTML = "";
-        phaseCostTableBody.innerHTML = "";
-        manualPriceTableBody.innerHTML = "";
-        manualTotalCostEl.innerText = "0";
-        if (costChart) {
-          costChart.destroy();
-          costChart = null;
-        }
-      }
-
-      saveAdvancedBtn.addEventListener('click', () => {
-        alert("تم حفظ تفاصيل المشروع المتقدمة بنجاح.");
-      });
-
-      calculateBtn.addEventListener('click', calculateCost);
-      resetBtn.addEventListener('click', resetForm);
-      calculateManualBtn.addEventListener('click', calculateManualCost);
-      shareBtn.addEventListener('click', shareOnWhatsApp);
-      printBtn.addEventListener('click', () => window.print());
-      downloadBtn.addEventListener('click', downloadExcel);
-      generatePDFBtn.addEventListener('click', generatePDF);
-      document.getElementById('clearHistoryBtn').addEventListener('click', () => {
-        localStorage.removeItem('calcHistory');
-        updateHistoryList();
-      });
-
-      // إصلاح زر الوضع الليلي
-      const darkModeToggle = document.getElementById('darkModeToggle');
-      darkModeToggle.addEventListener('click', function() {
-        document.body.classList.toggle('dark-mode');
-        const icon = this.querySelector('.icon');
-        const title = this.querySelector('.title');
-        if (document.body.classList.contains('dark-mode')) {
-          icon.innerText = "☀️";
-          title.innerText = currentLanguage === 'ar' ? "الوضع النهاري" : "Light Mode";
-        } else {
-          icon.innerText = "🌙";
-          title.innerText = currentLanguage === 'ar' ? "الوضع الليلي" : "Dark Mode";
-        }
-      });
-
-      // تفعيل زر تبديل اللغة
-      const languageToggle = document.getElementById('languageToggle');
-      languageToggle.addEventListener('click', toggleLanguage);
-
-      fetchPrices();
-      updateHistoryList();
-      // تطبيق الترجمة عند بدء التشغيل
-      translatePage();
-    });
-  </script>
-</body>
-</html>
